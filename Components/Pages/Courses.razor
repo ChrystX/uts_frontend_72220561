@@ -28,6 +28,7 @@ else
                 <th>Image</th>
                 <th>Duration (hours)</th>
                 <th>Category</th>
+                <th>Description</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -42,6 +43,7 @@ else
                     </td>
                     <td>@course.Duration</td>
                     <td>@course.Category.Name</td>
+                    <td>@course.Description</td>
                     <td>
                         <button class="btn btn-primary me-1" @onclick="() => NavigateToEdit(course.CourseId)">Edit</button>
                         <button class="btn btn-danger" @onclick="() => ConfirmDelete(course.CourseId)">Delete</button>
