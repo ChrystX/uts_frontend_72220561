@@ -1,0 +1,124 @@
+﻿@page "/edit-course/{CourseId:int}"
+@inject CourseService CourseService
+@inject CategoryService CategoryService
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text.Json
+@using Models
+@using Services
+@rendermode InteractiveServer
+
+<h3>Edit Course</h3>
+
+@if (course == null)
+{
+    <p><em>Loading course details...</em></p>
+}
+else
+{
+    <EditForm Model="@course" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <InputText id="name" class="form-control" @bind-Value="course.Name" />
+            <ValidationMessage For="@(() => course.Name)" />
+        </div>
+
+        <div class="form-group">
+            <label for="imageName">Image URL:</label>
+            <InputText id="imageName" class="form-control" @bind-Value="course.ImageName" />
+            <ValidationMessage For="@(() => course.ImageName)" />
+        </div>
+
+        <div class="form-group">
+            <label for="duration">Duration (hours):</label>
+            <InputNumber id="duration" class="form-control" @bind-Value="course.Duration" />
+            <ValidationMessage For="@(() => course.Duration)" />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="course.Description" />
+            <ValidationMessage For="@(() => course.Description)" />
+        </div>
+
+        <div class="form-group">
+            <label for="categoryId">Category:</label>
+            <select id="categoryId" class="form-control" @bind="course.CategoryId">
+                <option value="">Select a category</option>
+                @foreach (var category in categories)
+                {
+                    <option value="@category.CategoryId">@category.Name</option>
+                }
+            </select>
+            <ValidationMessage For="@(() => course.CategoryId)" />
+        </div>
+
+        <button type="submit" class="btn btn-success">Update Course</button>
+        <button type="button" class="btn btn-secondary" @onclick="NavigateBack">Cancel</button>
+    </EditForm>
+
+    <!-- Warning message and DTO display -->
+    @if (showWarning)
+    {
+        <div class="alert alert-warning mt-2">Warning: You will be redirected in 5 seconds!</div>
+        <pre>@JsonSerializer.Serialize(courseDto, new JsonSerializerOptions { WriteIndented = true })</pre>
+    }
+
+    @if (!string.IsNullOrEmpty(resultMessage))
+    {
+        <div class="alert alert-info mt-2">@resultMessage</div>
+    }
+}
+
+@code {
+    [Parameter]
+    public int CourseId { get; set; }
+
+    private Course? course;
+    private CourseUpdateDto? courseDto;
+    private List<Category> categories = new List<Category>();
+    private string? resultMessage;
+    private bool showWarning = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        course = await CourseService.GetCourseByIdAsync(CourseId);
+        categories = await CategoryService.GetCategoriesAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Map the course to CourseUpdateDto
+        courseDto = new CourseUpdateDto
+            {
+                CourseId = course.CourseId,
+                Name = course.Name,
+                ImageName = course.ImageName,
+                Duration = course.Duration,
+                Description = course.Description,
+                CategoryId = course.CategoryId
+            };
+
+        // Show warning and DTO details
+        showWarning = true;
+
+        // Delay for 5 seconds to display the warning and DTO
+        await Task.Delay(5000);
+
+        // Attempt the update
+        var success = await CourseService.UpdateCourseAsync(courseDto);
+        resultMessage = success ? "Course updated successfully!" : "Failed to update course. Please try again.";
+
+        // Redirect back
+        showWarning = false;
+        NavigateBack();
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/courses");
+    }
+}

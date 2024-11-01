@@ -1,0 +1,105 @@
+﻿@page "/edit-category/{categoryId:int}"
+@using Services
+@using Models
+@inject CategoryService CategoryService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<h3>Edit Category</h3>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (category == null)
+{
+    <p>Category not found.</p>
+}
+else
+{
+    <EditForm Model="@category" OnValidSubmit="SaveCategoryAsync" FormName="CategoryEdit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="categoryName">Name</label>
+            <InputText id="categoryName" class="form-control" @bind-Value="category.Name" />
+        </div>
+
+        <div class="form-group">
+            <label for="categoryDescription">Description</label>
+            <InputTextArea id="categoryDescription" class="form-control" @bind-Value="category.Description" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-secondary" @onclick="NavigateBack">Back</button>
+
+        @if (!string.IsNullOrEmpty(resultMessage))
+        {
+            <div class="alert alert-@alertClass mt-3">@resultMessage</div>
+        }
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int categoryId { get; set; }
+
+    private Category? category = new(); // Initialize to avoid null reference issues
+    private bool isLoading = true;
+    private string? resultMessage;
+    private string alertClass = "danger";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            category = await CategoryService.GetCategoryByIdAsync(categoryId);
+
+            if (category == null)
+            {
+                resultMessage = "Category not found or failed to load.";
+                alertClass = "danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            resultMessage = $"Error loading category: {ex.Message}";
+            alertClass = "danger";
+        }
+
+        isLoading = false;
+    }
+
+    private async Task SaveCategoryAsync()
+    {
+        if (category != null)
+        {
+            try
+            {
+                bool isUpdated = await CategoryService.UpdateCategoryAsync(category);
+
+                if (isUpdated)
+                {
+                    // Navigate back to the categories list upon successful update
+                    NavigationManager.NavigateTo("/categories");
+                }
+                else
+                {
+                    resultMessage = "Failed to update category. Check API or data binding.";
+                    alertClass = "danger";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultMessage = $"Exception: {ex.Message}";
+                alertClass = "danger";
+            }
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/categories");
+    }
+}

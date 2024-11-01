@@ -1,0 +1,57 @@
+﻿@page "/add-category"
+@using Services
+@using Models
+@inject CategoryService CategoryService
+@inject NavigationManager NavigationManager
+
+<EditForm Model="CategoryForm" OnValidSubmit="HandleValidSubmit" FormName="CategoryForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" class="form-control" @bind-Value="CategoryForm.Name" />
+        <ValidationMessage For="@(() => CategoryForm.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <InputText id="description" class="form-control" @bind-Value="CategoryForm.Description" />
+        <ValidationMessage For="@(() => CategoryForm.Description)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(resultMessage))
+{
+    <div class="alert alert-@alertClass">@resultMessage</div>
+}
+
+@code {
+    [SupplyParameterFromForm(FormName = "CategoryForm")]
+    private Category CategoryForm { get; set; } = new(); // Local model for form data
+
+    private string? resultMessage;
+    private string alertClass = "danger"; // Default to error styling
+
+    private async Task HandleValidSubmit()
+    {
+        var result = await CategoryService.CreateCategoryAsync(CategoryForm);
+        if (result == "Success")
+        {
+            resultMessage = "Category created successfully!";
+            alertClass = "success";
+            CategoryForm = new Category(); // Reset form
+        }
+        else
+        {
+            resultMessage = $"Failed to create category: {result}";
+            alertClass = "danger";
+        }
+
+        // Optional: Redirect to the categories page after a short delay
+        await Task.Delay(1000);
+        NavigationManager.NavigateTo("/categories");
+    }
+}

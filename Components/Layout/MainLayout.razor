@@ -1,0 +1,57 @@
+﻿@inherits LayoutComponentBase
+
+<div class="top-row navbar navbar-expand bg-dark text-light px-4 shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand text-white fw-bold" href="#">UTS Frontend</a>
+        <nav class="navbar-nav me-auto">
+            <div class="nav-item">
+                <NavLink class="nav-link text-white fs-5" href="/" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill me-2" aria-hidden="true"></span> Home
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link text-white fs-5" href="/categories">
+                    <span class="bi bi-folder-fill me-2" aria-hidden="true"></span> Categories
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link text-white fs-5" href="/courses">
+                    <span class="bi bi-book-fill me-2" aria-hidden="true"></span> Courses
+                </NavLink>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<div class="page mx-auto mt-3">
+    <main>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<style>
+    body {
+        background-color: #ffffff;
+        color: #000000;
+    }
+
+    .top-row {
+        background-color: #0d1b2a;
+        border-bottom: 2px solid #1c3d5a;
+        padding: 1rem 0.75rem;
+    }
+
+    .page {
+        width: 90%;
+    }
+
+    .navbar-nav .nav-link {
+        font-size: 1.125rem;
+    }
+
+        .navbar-nav .nav-link:hover {
+            color: #a0c4ff;
+        }
+</style>

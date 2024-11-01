@@ -1,0 +1,157 @@
+﻿@page "/categories"
+@using Services
+@using Models
+@inject CategoryService CategoryService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+
+<h3 class="text-center my-4">Category List</h3>
+
+@if (categories == null)
+{
+    <div class="d-flex justify-content-center">
+        <p><em>Loading...</em></p>
+    </div>
+}
+else if (categories.Count == 0)
+{
+    <div class="alert alert-warning text-center">
+        No categories found.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Category ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Description</th>
+                    <th scope="col" class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in PagedCategories)
+                {
+                    <tr>
+                        <td>@category.CategoryId</td>
+                        <td>@category.Name</td>
+                        <td>@category.Description</td>
+                        <td class="text-center">
+                            <button class="btn btn-primary btn-sm mx-1" @onclick="() => NavigateToEdit(category.CategoryId)">
+                                Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm mx-1" @onclick="() => DeleteCategoryAsync(category.CategoryId)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-center mt-3">
+        <button class="btn btn-secondary me-2" @onclick="PreviousPage" disabled="@IsFirstPage">Previous</button>
+        @foreach (var pageNumber in Enumerable.Range(1, TotalPages))
+        {
+            <button class="btn @(pageNumber == currentPage ? "btn-primary" : "btn-light") me-2" @onclick="() => GoToPage(pageNumber)">
+                @pageNumber
+            </button>
+        }
+        <button class="btn btn-secondary ms-2" @onclick="NextPage" disabled="@IsLastPage">Next</button>
+    </div>
+
+    <div class="text-center my-3">
+        <button class="btn btn-success" @onclick="NavigateToAdd">Add New Category</button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(resultMessage))
+{
+    <div class="alert alert-@alertClass text-center mt-3">
+        @resultMessage
+    </div>
+}
+
+@code {
+    private List<Category> categories;
+    private const int PageSize = 7;
+    private int currentPage = 1;
+    private string? resultMessage;
+    private string alertClass = "danger";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        categories = await CategoryService.GetCategoriesAsync();
+    }
+
+    private IEnumerable<Category> PagedCategories => categories
+        .Skip((currentPage - 1) * PageSize)
+        .Take(PageSize);
+
+    private int TotalPages => (int)Math.Ceiling((double)(categories?.Count ?? 0) / PageSize);
+
+    private bool IsFirstPage => currentPage == 1;
+    private bool IsLastPage => currentPage == TotalPages;
+
+    private void PreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            currentPage--;
+        }
+    }
+
+    private void NextPage()
+    {
+        if (!IsLastPage)
+        {
+            currentPage++;
+        }
+    }
+
+    private void GoToPage(int page)
+    {
+        currentPage = page;
+    }
+
+    private async Task DeleteCategoryAsync(int categoryId)
+    {
+        var confirmResult = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this category?");
+
+        if (confirmResult)
+        {
+            bool isDeleted = await CategoryService.DeleteCategoryAsync(categoryId);
+            if (isDeleted)
+            {
+                resultMessage = "Category deleted successfully.";
+                alertClass = "success";
+                await LoadCategories();
+            }
+            else
+            {
+                resultMessage = "Failed to delete the category.";
+                alertClass = "danger";
+            }
+        }
+    }
+
+    private void NavigateToAdd()
+    {
+        NavigationManager.NavigateTo("/add-category");
+    }
+
+    private void NavigateToEdit(int categoryId)
+    {
+        NavigationManager.NavigateTo($"/edit-category/{categoryId}");
+    }
+}

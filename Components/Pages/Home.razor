@@ -1,0 +1,117 @@
+﻿@page "/"
+@inject CourseService CourseService
+@using Services
+@using Models
+@rendermode InteractiveServer
+
+<h3>Courses List</h3>
+
+<!-- Search Bar -->
+<div class="mb-3">
+    <input @bind="searchText" @bind:event="oninput" type="text" class="form-control" placeholder="Search by course or category name..." />
+</div>
+
+@if (FilteredCourses == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!FilteredCourses.Any())
+{
+    <p>No courses available.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var course in PaginatedCourses)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm card-style">
+                    <img src="@course.ImageName" class="card-img-top" alt="@course.Name"
+                         style="height: 200px; object-fit: cover;"
+                         onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png';" />
+                    <div class="card-body">
+                        <h5 class="card-title">@course.Name</h5>
+                        <p class="card-text">@course.Description</p>
+                        <p class="card-text"><strong>Duration:</strong> @course.Duration hours</p>
+                        <p class="card-text"><strong>Category:</strong> <span class="category-name">@course.Category.Name</span></p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-center align-items-center mt-4">
+        <button class="btn btn-secondary me-2" @onclick="PreviousPage" disabled="@IsFirstPage">Previous</button>
+        <button class="btn btn-secondary ms-2" @onclick="NextPage" disabled="@IsLastPage">Next</button>
+    </div>
+}
+
+@code {
+    private List<Course> courses = new List<Course>();
+    private string searchText = string.Empty;
+    private int currentPage = 1;
+    private const int PageSize = 6;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCoursesAsync();
+        StateHasChanged(); // Ensure the UI updates after loading
+    }
+
+    private async Task LoadCoursesAsync()
+    {
+        try
+        {
+            courses = await CourseService.GetCoursesAsync();
+            Console.WriteLine($"Loaded {courses.Count} courses.");
+        }
+        catch (Exception ex)
+        {
+            courses = new List<Course>();
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+        }
+    }
+
+    private IEnumerable<Course> FilteredCourses =>
+        string.IsNullOrWhiteSpace(searchText)
+            ? courses
+            : courses.Where(c => c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                                 c.Category.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<Course> PaginatedCourses =>
+        FilteredCourses.Skip((currentPage - 1) * PageSize).Take(PageSize);
+
+    private int TotalPages => (int)Math.Ceiling(FilteredCourses.Count() / (double)PageSize);
+
+    private bool IsFirstPage => currentPage == 1;
+    private bool IsLastPage => currentPage == TotalPages;
+
+    private void GoToPage(int pageNumber)
+    {
+        if (pageNumber < 1 || pageNumber > TotalPages) return; // Prevent invalid page numbers
+        currentPage = pageNumber;
+        Console.WriteLine($"Navigating to page: {currentPage}");
+        StateHasChanged(); // Ensure the UI updates after changing the page
+    }
+
+    private void PreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            currentPage--;
+            Console.WriteLine($"Going to previous page: {currentPage}");
+            StateHasChanged();
+        }
+    }
+
+    private void NextPage()
+    {
+        if (!IsLastPage)
+        {
+            currentPage++;
+            Console.WriteLine($"Going to next page: {currentPage}");
+            StateHasChanged();
+        }
+    }
+}

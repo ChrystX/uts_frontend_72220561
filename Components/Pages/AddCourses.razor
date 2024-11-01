@@ -1,0 +1,122 @@
+﻿@page "/create-course"
+@inject CourseService CourseService
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Forms
+@using Models
+@using Services
+@rendermode InteractiveServer
+
+<h3>Create Course</h3>
+
+<EditForm Model="@course" OnValidSubmit="@HandleValidSubmit" FormName="CourseForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" class="form-control" @bind-Value="@course.Name" />
+        <ValidationMessage For="@(() => course.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="imageName">Image Name:</label>
+        <InputText id="imageName" class="form-control" @bind-Value="@course.ImageName" />
+        <ValidationMessage For="@(() => course.ImageName)" />
+    </div>
+
+    <div class="form-group">
+        <label for="duration">Duration:</label>
+        <InputNumber id="duration" class="form-control" @bind-Value="@course.Duration" />
+        <ValidationMessage For="@(() => course.Duration)" />
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <InputTextArea id="description" class="form-control" @bind-Value="@course.Description" />
+        <ValidationMessage For="@(() => course.Description)" />
+    </div>
+
+    <div class="form-group">
+        <label for="categoryId">Category:</label>
+        <select id="categoryId" class="form-control" @bind="course.CategoryId">
+            <option value="">Select a category</option>
+            @foreach (var category in categories)
+            {
+                <option value="@category.CategoryId">@category.Name</option>
+            }
+        </select>
+        <ValidationMessage For="@(() => course.CategoryId)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>
+
+@if (isSubmitted)
+{
+    <div class="alert alert-success" role="alert">
+        Course created successfully! Redirecting...
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}
+
+@code {
+    [SupplyParameterFromForm(FormName = "CourseForm")]
+    private Course course { get; set; } = new Course();
+    private List<Category> categories = new List<Category>();
+    private bool isSubmitted = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await GetCategoriesAsync();
+        if (!categories.Any())
+        {
+            categories.Add(new Category { CategoryId = 0, Name = "None" });
+        }
+    }
+
+    private async Task<List<Category>> GetCategoriesAsync()
+    {
+        try
+        {
+            return await Http.GetFromJsonAsync<List<Category>>(
+                "https://actualbackendapp.azurewebsites.net/api/v1/Categories");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error fetching categories: {ex.Message}";
+            return new List<Category>();
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var success = await CourseService.CreateCourseAsync(course);
+
+            if (success)
+            {
+                isSubmitted = true;
+                course = new Course(); // Reset the course object
+                errorMessage = string.Empty;
+
+                // Delay before redirecting to another page (e.g., course list)
+                await Task.Delay(2000); // Optional: 2-second delay
+                Navigation.NavigateTo("/courses"); // Navigate to the courses list page
+            }
+            else
+            {
+                errorMessage = "Error creating the course. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+    }
+}
