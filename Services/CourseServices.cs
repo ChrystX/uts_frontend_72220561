@@ -5,6 +5,7 @@
     using System.Threading.Tasks;
     using System.Collections.Generic;
     using Models;
+
     public class CourseService
     {
         private readonly HttpClient _httpClient;
@@ -18,7 +19,7 @@
         {
             try
             {
-                return await _httpClient.GetFromJsonAsync<List<Course>>("/api/Courses") ?? new List<Course>();
+                return await _httpClient.GetFromJsonAsync<List<Course>>("https://actbackendseervices.azurewebsites.net/api/Courses") ?? new List<Course>();
             }
             catch (Exception ex)
             {
@@ -31,8 +32,7 @@
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync(
-                    "https://actualbackendapp.azurewebsites.net/api/Courses", course);
+                var response = await _httpClient.PostAsJsonAsync("https://actbackendseervices.azurewebsites.net/api/Courses", course);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -44,20 +44,42 @@
 
         public async Task<bool> DeleteCourseAsync(int courseId)
         {
-            var response = await _httpClient.DeleteAsync($"https://actualbackendapp.azurewebsites.net/api/Courses/{courseId}");
+            var response = await _httpClient.DeleteAsync($"https://actbackendseervices.azurewebsites.net/api/Courses/{courseId}");
             return response.IsSuccessStatusCode;
+        }
+
+        public async Task<List<Course>> SearchCoursesAsync(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new List<Course>(); // Return an empty list if query is invalid
+            }
+
+            var url = $"https://actbackendseervices.azurewebsites.net/api/Courses/search/{query}";
+
+            try
+            {
+                var courses = await _httpClient.GetFromJsonAsync<List<Course>>(url);
+                return courses ?? new List<Course>();
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle network errors or server issues
+                Console.Error.WriteLine($"Error fetching courses: {ex.Message}");
+                return new List<Course>();
+            }
         }
 
         public async Task<Course> GetCourseByIdAsync(int courseId)
         {
-            return await _httpClient.GetFromJsonAsync<Course>($"https://actualbackendapp.azurewebsites.net/api/Courses/{courseId}");
+            return await _httpClient.GetFromJsonAsync<Course>($"https://actbackendseervices.azurewebsites.net/api/Courses/{courseId}");
         }
 
         public async Task<bool> UpdateCourseAsync(CourseUpdateDto courseDto)
         {
             // Ensure that the CourseId is properly included in the URL
             var response = await _httpClient.PutAsJsonAsync(
-                $"https://actualbackendapp.azurewebsites.net/api/Courses/{courseDto.CourseId}",
+                $"https://actbackendseervices.azurewebsites.net/api/Courses/{courseDto.CourseId}",
                 courseDto
             );
 

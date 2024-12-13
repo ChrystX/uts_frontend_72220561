@@ -1,0 +1,88 @@
+﻿@page "/register"
+@inject uts_frontend_72220561.Services.UserService UserService
+@using uts_frontend_72220561.Models
+@rendermode InteractiveServer
+
+<EditForm Model="user" OnValidSubmit="HandleValidSubmit" FormName="RegisterForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label for="email">Email:</label>
+        <InputText id="email" @bind-Value="user.Email" />
+    </div>
+
+    <div>
+        <label for="userName">Username:</label>
+        <InputText id="userName" @bind-Value="user.UserName" />
+    </div>
+
+    <div>
+        <label for="password">Password:</label>
+        <InputText id="password" @bind-Value="user.Password" type="@passwordInputType" />
+        <button type="button" @onclick="TogglePasswordVisibility">
+            @passwordToggleText
+        </button>
+    </div>
+
+    <div>
+        <label for="fullName">Full Name:</label>
+        <InputText id="fullName" @bind-Value="user.FullName" />
+    </div>
+
+    <button type="submit">Register</button>
+
+    @if (registrationResult != null)
+    {
+        <p>@registrationResult</p>
+    }
+</EditForm>
+
+@code {
+    private User user = new User();
+    private string? registrationResult;
+    private bool isPasswordVisible = false;
+
+    // Determine the input type and button text based on password visibility
+    private string passwordInputType => isPasswordVisible ? "text" : "password";
+    private string passwordToggleText => isPasswordVisible ? "Hide" : "Show";
+
+    private async Task HandleValidSubmit()
+    {
+        if (!IsValidPassword(user.Password))
+        {
+            registrationResult = "Password does not meet the requirements: must be at least 6 characters long, contain one non-alphanumeric character, one digit, and one uppercase letter.";
+            return;
+        }
+
+        registrationResult = await UserService.RegisterUserAsync(user);
+    }
+
+    private bool IsValidPassword(string password)
+    {
+        if (string.IsNullOrEmpty(password) || password.Length < 6)
+        {
+            return false;
+        }
+
+        bool hasUpperCase = false;
+        bool hasLowerCase = false;
+        bool hasDigit = false;
+        bool hasNonAlphanumeric = false;
+
+        foreach (char c in password)
+        {
+            if (char.IsUpper(c)) hasUpperCase = true;
+            if (char.IsLower(c)) hasLowerCase = true;
+            if (char.IsDigit(c)) hasDigit = true;
+            if (!char.IsLetterOrDigit(c)) hasNonAlphanumeric = true;
+        }
+
+        return hasUpperCase && hasLowerCase && hasDigit && hasNonAlphanumeric;
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        isPasswordVisible = !isPasswordVisible;
+    }
+}

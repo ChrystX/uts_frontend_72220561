@@ -1,27 +1,61 @@
 ﻿@inherits LayoutComponentBase
+@using Services
 
-<div class="top-row navbar navbar-expand bg-dark text-light px-4 shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand text-white fw-bold" href="#">UTS Frontend</a>
-        <nav class="navbar-nav me-auto">
-            <div class="nav-item">
-                <NavLink class="nav-link text-white fs-5" href="/" Match="NavLinkMatch.All">
-                    <span class="bi bi-house-door-fill me-2" aria-hidden="true"></span> Home
-                </NavLink>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link text-white fs-5" href="/categories">
-                    <span class="bi bi-folder-fill me-2" aria-hidden="true"></span> Categories
-                </NavLink>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link text-white fs-5" href="/courses">
-                    <span class="bi bi-book-fill me-2" aria-hidden="true"></span> Courses
-                </NavLink>
-            </div>
-        </nav>
+@code {
+    [Parameter]
+    public bool HideNav { get; set; }
+
+    [Inject]
+    private NavigationManager Navigation { get; set; }
+
+    [Inject]
+    private TokenService TokenService { get; set; }
+
+    private void Logout()
+    {
+        // Clear the token or user data
+        TokenService.AuthToken = null;
+        Navigation.NavigateTo("/login");
+    }
+}
+
+@if (!HideNav)
+{
+    <div class="top-row navbar navbar-expand bg-dark text-light px-4 shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white fw-bold" href="#">UTS Frontend</a>
+            <nav class="navbar-nav me-auto">
+                <div class="nav-item">
+                    <NavLink class="nav-link text-white fs-5" href="/home" Match="NavLinkMatch.All">
+                        <span class="bi bi-house-door-fill me-2" aria-hidden="true"></span> Home
+                    </NavLink>
+                </div>
+                <div class="nav-item">
+                    <NavLink class="nav-link text-white fs-5" href="/categories">
+                        <span class="bi bi-folder-fill me-2" aria-hidden="true"></span> Categories
+                    </NavLink>
+                </div>
+                <div class="nav-item">
+                    <NavLink class="nav-link text-white fs-5" href="/courses">
+                        <span class="bi bi-book-fill me-2" aria-hidden="true"></span> Courses
+                    </NavLink>
+                </div>
+                <!-- New Nav Item for Enrollment -->
+                <div class="nav-item">
+                    <NavLink class="nav-link text-white fs-5" href="/enrollment">
+                        <span class="bi bi-pencil-square me-2" aria-hidden="true"></span> Enrollment
+                    </NavLink>
+                </div>
+                <!-- Add Logout Button -->
+                <div class="nav-item">
+                    <button class="btn btn-danger fs-5" @onclick="Logout">
+                        <span class="bi bi-box-arrow-right me-2" aria-hidden="true"></span> Logout
+                    </button>
+                </div>
+            </nav>
+        </div>
     </div>
-</div>
+}
 
 <div class="page mx-auto mt-3">
     <main>

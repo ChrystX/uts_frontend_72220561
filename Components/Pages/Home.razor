@@ -1,10 +1,19 @@
-﻿@page "/"
-@inject CourseService CourseService
+﻿@page "/home"
 @using Services
 @using Models
+@inject CourseService CourseService
+@inject NavigationManager Navigation
+@inject TokenService TokenService
 @rendermode InteractiveServer
 
 <h3>Courses List</h3>
+
+<!-- Logout Button -->
+<div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-danger fs-5" @onclick="Logout">
+        <span class="bi bi-box-arrow-right me-2" aria-hidden="true"></span> Logout
+    </button>
+</div>
 
 <!-- Search Bar -->
 <div class="mb-3">
@@ -113,5 +122,11 @@ else
             Console.WriteLine($"Going to next page: {currentPage}");
             StateHasChanged();
         }
+    }
+
+    private void Logout()
+    {
+        TokenService.AuthToken = null;
+        Navigation.NavigateTo("/login", true);
     }
 }

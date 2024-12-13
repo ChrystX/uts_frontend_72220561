@@ -23,8 +23,20 @@ builder.Services.AddHttpClient<CourseService>(client =>
     client.BaseAddress = new Uri("https://actualbackendapp.azurewebsites.net/");
 });
 
-// Remove unnecessary HttpClient registrations.
-// No need for another generic HttpClient here.
+// Register UserService with the correct base URL.
+builder.Services.AddHttpClient<UserService>(client =>
+{
+    client.BaseAddress = new Uri("https://actbackendseervices.azurewebsites.net/");
+});
+
+// Register TokenService as a singleton.
+builder.Services.AddSingleton<TokenService>();
+
+// Register ApiService
+builder.Services.AddHttpClient<EnrollmentService>(client =>
+{
+    client.BaseAddress = new Uri("https://actbackendseervices.azurewebsites.net/");
+});
 
 var app = builder.Build();
 

@@ -1,0 +1,20 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject TokenService TokenService
+@using Services
+
+<AuthorizeView>
+    <Authorized>
+        @ChildContent
+    </Authorized>
+    <NotAuthorized>
+        @if (TokenService.AuthToken == null)
+        {
+            <p>You are not authorized to view this page.</p>
+        }
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

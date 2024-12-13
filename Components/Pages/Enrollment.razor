@@ -1,0 +1,126 @@
+﻿@page "/enrollment"
+@using uts_frontend_72220561.Services
+@using uts_frontend_72220561.Models
+@inject EnrollmentService EnrollmentService
+@inject CourseService CourseService
+@inject TokenService TokenService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<CustomAuthorizeView>
+    <h3>Enroll in a Course</h3>
+
+    @if (showSuccessMessage)
+    {
+        <div class="alert alert-success" role="alert">
+            Enrollment successful!
+        </div>
+    }
+
+    @if (showErrorMessage)
+    {
+        <div class="alert alert-danger" role="alert">
+            @ErrorMessage
+        </div>
+    }
+
+    <EditForm Model="NewEnrollment" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="InstructorId">Instructor</label>
+            <InputSelect id="InstructorId" @bind-Value="NewEnrollment.InstructorId">
+                <option value="">Select Instructor</option>
+                @foreach (var instructor in instructors)
+                {
+                    <option value="@instructor.InstructorId">@instructor.FullName</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label for="CourseId">Course</label>
+            <InputSelect id="CourseId" @bind-Value="NewEnrollment.CourseId">
+                <option value="">Select Course</option>
+                @foreach (var course in courses)
+                {
+                    <option value="@course.CourseId">@course.Name</option>
+                }
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enroll</button>
+    </EditForm>
+
+    <div class="alert alert-info mt-3" role="alert">
+        <strong>Form Data Being Sent:</strong>
+        <p>Instructor ID: @NewEnrollment.InstructorId</p>
+        <p>Course ID: @NewEnrollment.CourseId</p>
+    </div>
+
+    <h3>Enrollment Data</h3>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Enrollment ID</th>
+                <th>Instructor ID</th>
+                <th>Course ID</th>
+                <th>Enrolled At</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var enrollment in enrollments)
+            {
+                <tr>
+                    <td>@enrollment.EnrollmentId</td>
+                    <td>@enrollment.InstructorId</td>
+                    <td>@enrollment.CourseId</td>
+                    <td>@enrollment.EnrolledAt</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</CustomAuthorizeView>
+
+@code {
+    private Enrollments NewEnrollment = new Enrollments();
+    private List<Instructors> instructors = new List<Instructors>();
+    private List<Course> courses = new List<Course>();
+    private List<Enrollments> enrollments = new List<Enrollments>();
+    private bool showSuccessMessage = false;
+    private bool showErrorMessage = false;
+    private string ErrorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TokenService.AuthToken == null)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        instructors = await EnrollmentService.GetAllInstructorsAsync();
+        courses = await CourseService.GetCoursesAsync();
+        enrollments = await EnrollmentService.GetEnrollmentsAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        showSuccessMessage = false;
+        showErrorMessage = false;
+        try
+        {
+            await EnrollmentService.CreateEnrollmentAsync(NewEnrollment);
+            showSuccessMessage = true;
+            enrollments = await EnrollmentService.GetEnrollmentsAsync(); // Refresh the enrollment data
+            NewEnrollment = new Enrollments(); // Reset the form
+        }
+        catch (Exception ex)
+        {
+            showErrorMessage = true;
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+}
