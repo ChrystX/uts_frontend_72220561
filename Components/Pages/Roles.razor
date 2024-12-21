@@ -1,0 +1,63 @@
+﻿@page "/roles"
+@using uts_frontend_72220561.Services
+@inject UserService UserService
+@inject TokenService TokenService
+@inject NavigationManager NavigationManager
+@using Models
+@rendermode InteractiveServer
+
+<div class="role-container">
+    <h2>Create and Assign Role</h2>
+
+    <EditForm Model="newRole" OnValidSubmit="HandleCreateRole">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="roleName">Role Name:</label>
+            <InputText id="roleName" @bind-Value="newRole.Name" />
+            <ValidationMessage For="@(() => newRole.Name)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Role</button>
+    </EditForm>
+
+    <EditForm Model="userRole" OnValidSubmit="HandleAssignRole">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="userName">User Name:</label>
+            <InputText id="userName" @bind-Value="userRole.UserName" />
+            <ValidationMessage For="@(() => userRole.UserName)" />
+        </div>
+
+        <div class="form-group">
+            <label for="roleName">Role Name:</label>
+            <InputText id="roleName" @bind-Value="userRole.RoleName" />
+            <ValidationMessage For="@(() => userRole.RoleName)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Assign Role</button>
+    </EditForm>
+
+    <div id="responseMessage">@responseMessage</div>
+</div>
+
+@code {
+    private Role newRole = new Role();
+    private UserRole userRole = new UserRole();
+    private string responseMessage;
+
+    private async Task HandleCreateRole()
+    {
+        var result = await UserService.CreateRoleAsync(newRole);
+        responseMessage = result == "Success" ? "Role created successfully!" : $"Failed to create role: {result}";
+    }
+
+    private async Task HandleAssignRole()
+    {
+        var result = await UserService.RegisterUserRoleAsync(userRole);
+        responseMessage = result == "Success" ? "Role assigned successfully!" : $"Failed to assign role: {result}";
+    }
+}

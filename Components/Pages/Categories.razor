@@ -1,14 +1,22 @@
 ﻿@page "/categories"
 @using Services
 @using Models
+@using System.Net // Add this line
 @inject CategoryService CategoryService
 @inject NavigationManager NavigationManager
-@rendermode InteractiveServer
+@inject TokenService TokenService
 @inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
 
 <h3 class="text-center my-4">Category List</h3>
 
-@if (categories == null)
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @errorMessage
+    </div>
+}
+else if (categories == null)
 {
     <div class="d-flex justify-content-center">
         <p><em>Loading...</em></p>
@@ -83,15 +91,33 @@ else
     private int currentPage = 1;
     private string? resultMessage;
     private string alertClass = "danger";
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        if (TokenService.AuthToken == null)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
         await LoadCategories();
     }
 
     private async Task LoadCategories()
     {
-        categories = await CategoryService.GetCategoriesAsync();
+        try
+        {
+            categories = await CategoryService.GetCategoriesAsync();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            errorMessage = "You do not have permission to access this page. Please contact the administrator if you believe this is an error.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
     }
 
     private IEnumerable<Category> PagedCategories => categories

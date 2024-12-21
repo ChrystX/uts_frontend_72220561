@@ -1,10 +1,11 @@
 ﻿@page "/create-course"
-@inject CourseService CourseService
-@inject HttpClient Http
-@inject NavigationManager Navigation
-@using Microsoft.AspNetCore.Components.Forms
-@using Models
 @using Services
+@using Models
+@using System.Net // Add this line
+@inject CourseService CourseService
+@inject CategoryService CategoryService
+@inject NavigationManager Navigation
+@inject TokenService TokenService
 @rendermode InteractiveServer
 
 <h3>Create Course</h3>
@@ -72,24 +73,28 @@ else if (!string.IsNullOrEmpty(errorMessage))
 
     protected override async Task OnInitializedAsync()
     {
-        categories = await GetCategoriesAsync();
-        if (!categories.Any())
+        if (TokenService.AuthToken == null)
         {
-            categories.Add(new Category { CategoryId = 0, Name = "None" });
+            Navigation.NavigateTo("/login");
+            return;
         }
+
+        await LoadCategoriesAsync();
     }
 
-    private async Task<List<Category>> GetCategoriesAsync()
+    private async Task LoadCategoriesAsync()
     {
         try
         {
-            return await Http.GetFromJsonAsync<List<Category>>(
-                "https://actualbackendapp.azurewebsites.net/api/v1/Categories");
+            categories = await CategoryService.GetCategoriesAsync();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden || ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            errorMessage = "You do not have permission to access the categories. Please contact the administrator if you believe this is an error.";
         }
         catch (Exception ex)
         {
             errorMessage = $"Error fetching categories: {ex.Message}";
-            return new List<Category>();
         }
     }
 

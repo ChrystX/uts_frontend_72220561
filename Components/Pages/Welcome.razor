@@ -1,0 +1,53 @@
+﻿@page "/"
+
+<h3>Welcome to Our Application</h3>
+
+<p>Please choose an option:</p>
+
+<div class="button-container">
+    <a href="/register" class="btn">Register</a>
+    <a href="/login" class="btn">Login</a>
+    <a href="/roles" class="btn">Roles</a>
+</div>
+
+<style>
+    /* Hiding the navmenu */
+    nav {
+        display: none;
+    }
+
+    /* Styling the page */
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 50px;
+    }
+
+    .button-container {
+        margin-top: 20px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        display: inline-block;
+        margin: 10px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+
+    h3 {
+        color: #333;
+        font-size: 24px;
+    }
+
+    p {
+        color: #666;
+    }
+</style>

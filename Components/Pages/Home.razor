@@ -1,10 +1,20 @@
-﻿@page "/"
-@inject CourseService CourseService
+﻿@page "/home"
 @using Services
 @using Models
+@inject CourseService CourseService
+@inject EnrollmentService EnrollmentService
+@inject NavigationManager Navigation
+@inject TokenService TokenService
 @rendermode InteractiveServer
 
 <h3>Courses List</h3>
+
+<!-- Logout Button -->
+<div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-danger fs-5" @onclick="Logout">
+        <span class="bi bi-box-arrow-right me-2" aria-hidden="true"></span> Logout
+    </button>
+</div>
 
 <!-- Search Bar -->
 <div class="mb-3">
@@ -24,6 +34,8 @@ else
     <div class="row">
         @foreach (var course in PaginatedCourses)
         {
+            var instructorName = GetInstructorName(course.CourseId);
+
             <div class="col-md-4 mb-4">
                 <div class="card h-100 shadow-sm card-style">
                     <img src="@course.ImageName" class="card-img-top" alt="@course.Name"
@@ -34,6 +46,7 @@ else
                         <p class="card-text">@course.Description</p>
                         <p class="card-text"><strong>Duration:</strong> @course.Duration hours</p>
                         <p class="card-text"><strong>Category:</strong> <span class="category-name">@course.Category.Name</span></p>
+                        <p class="card-text"><strong>Instructor:</strong> @instructorName</p>
                     </div>
                 </div>
             </div>
@@ -49,6 +62,8 @@ else
 
 @code {
     private List<Course> courses = new List<Course>();
+    private List<Instructors> instructors = new List<Instructors>();
+    private List<Enrollments> enrollments = new List<Enrollments>();
     private string searchText = string.Empty;
     private int currentPage = 1;
     private const int PageSize = 6;
@@ -56,6 +71,8 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadCoursesAsync();
+        await LoadInstructorsAsync();
+        await LoadEnrollmentsAsync();
         StateHasChanged(); // Ensure the UI updates after loading
     }
 
@@ -71,6 +88,48 @@ else
             courses = new List<Course>();
             Console.WriteLine($"Error loading courses: {ex.Message}");
         }
+    }
+
+    private async Task LoadInstructorsAsync()
+    {
+        try
+        {
+            instructors = await EnrollmentService.GetAllInstructorsAsync();
+            Console.WriteLine($"Loaded {instructors.Count} instructors.");
+        }
+        catch (Exception ex)
+        {
+            instructors = new List<Instructors>();
+            Console.WriteLine($"Error loading instructors: {ex.Message}");
+        }
+    }
+
+    private async Task LoadEnrollmentsAsync()
+    {
+        try
+        {
+            enrollments = await EnrollmentService.GetEnrollmentsAsync();
+            Console.WriteLine($"Loaded {enrollments.Count} enrollments.");
+        }
+        catch (Exception ex)
+        {
+            enrollments = new List<Enrollments>();
+            Console.WriteLine($"Error loading enrollments: {ex.Message}");
+        }
+    }
+
+    private string GetInstructorName(int courseId)
+    {
+        var firstEnrollment = enrollments.FirstOrDefault(e => e.CourseId == courseId);
+        if (firstEnrollment != null)
+        {
+            var instructor = instructors.FirstOrDefault(i => i.InstructorId == firstEnrollment.InstructorId);
+            if (instructor != null)
+            {
+                return instructor.FullName;
+            }
+        }
+        return "TBA";
     }
 
     private IEnumerable<Course> FilteredCourses =>
@@ -113,5 +172,11 @@ else
             Console.WriteLine($"Going to next page: {currentPage}");
             StateHasChanged();
         }
+    }
+
+    private void Logout()
+    {
+        TokenService.AuthToken = null;
+        Navigation.NavigateTo("/login", true);
     }
 }

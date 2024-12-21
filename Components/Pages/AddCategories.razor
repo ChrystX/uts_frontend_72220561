@@ -3,30 +3,33 @@
 @using Models
 @inject CategoryService CategoryService
 @inject NavigationManager NavigationManager
+@inject TokenService TokenService
 
-<EditForm Model="CategoryForm" OnValidSubmit="HandleValidSubmit" FormName="CategoryForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<CustomAuthorizeView>
+    <EditForm Model="CategoryForm" OnValidSubmit="HandleValidSubmit" FormName="CategoryForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <div class="form-group">
-        <label for="name">Name:</label>
-        <InputText id="name" class="form-control" @bind-Value="CategoryForm.Name" />
-        <ValidationMessage For="@(() => CategoryForm.Name)" />
-    </div>
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <InputText id="name" class="form-control" @bind-Value="CategoryForm.Name" />
+            <ValidationMessage For="@(() => CategoryForm.Name)" />
+        </div>
 
-    <div class="form-group">
-        <label for="description">Description:</label>
-        <InputText id="description" class="form-control" @bind-Value="CategoryForm.Description" />
-        <ValidationMessage For="@(() => CategoryForm.Description)" />
-    </div>
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <InputText id="description" class="form-control" @bind-Value="CategoryForm.Description" />
+            <ValidationMessage For="@(() => CategoryForm.Description)" />
+        </div>
 
-    <button type="submit" class="btn btn-primary">Create</button>
-</EditForm>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </EditForm>
 
-@if (!string.IsNullOrEmpty(resultMessage))
-{
-    <div class="alert alert-@alertClass">@resultMessage</div>
-}
+    @if (!string.IsNullOrEmpty(resultMessage))
+    {
+        <div class="alert alert-@alertClass">@resultMessage</div>
+    }
+</CustomAuthorizeView>
 
 @code {
     [SupplyParameterFromForm(FormName = "CategoryForm")]
@@ -34,6 +37,14 @@
 
     private string? resultMessage;
     private string alertClass = "danger"; // Default to error styling
+
+    protected override void OnInitialized()
+    {
+        if (TokenService.AuthToken == null)
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+    }
 
     private async Task HandleValidSubmit()
     {

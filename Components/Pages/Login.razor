@@ -1,0 +1,53 @@
+﻿@page "/login"
+@using uts_frontend_72220561.Services
+@inject UserService UserService
+@inject TokenService TokenService
+@inject NavigationManager NavigationManager
+@using Models
+@rendermode InteractiveServer
+
+<div class="login-container">
+    <h2>Login</h2>
+    <EditForm Model="loginUser" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <InputText id="username" @bind-Value="loginUser.UserName" />
+            <ValidationMessage For="@(() => loginUser.UserName)" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <InputText id="password" @bind-Value="loginUser.Password" type="password" />
+            <ValidationMessage For="@(() => loginUser.Password)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Login</button>
+    </EditForm>
+    <div id="responseMessage">@responseMessage</div>
+</div>
+
+@code {
+    private LoginUser loginUser = new LoginUser();
+    private string responseMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        var loginResult = await UserService.LoginUserAsync(loginUser);
+        if (loginResult.StartsWith("Success"))
+        {
+            // Extract the token from the success message
+            var token = loginResult.Replace("Success: ", "");
+            // Store the token in TokenService
+            TokenService.AuthToken = token;
+            responseMessage = $"Login successful! Token: {token}";
+            // NavigationManager.NavigateTo("/home");
+        }
+        else
+        {
+            responseMessage = loginResult;
+        }
+    }
+}
